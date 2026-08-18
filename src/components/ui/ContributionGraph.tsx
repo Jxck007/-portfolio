@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { SiGithub } from 'react-icons/si';
-import { GitCommit, Flame, Calendar, ExternalLink, Sparkles } from 'lucide-react';
+import { GitCommit, Flame, Calendar, ExternalLink, Sparkles, Loader2, AlertCircle } from 'lucide-react';
 
 export interface ContributionDay {
   date: string;
@@ -15,56 +15,69 @@ export interface ContributionGraphProps {
   className?: string;
 }
 
-export default function ContributionGraph({
-  username = 'Jxck007',
-  year = 2025,
-  className = ''
-}: ContributionGraphProps) {
-  const [hoveredDay, setHoveredDay] = useState<{
-    day: ContributionDay;
-    x: number;
-    y: number;
-  } | null>(null);
+type FetchState = 'idle' | 'loading' | 'success' | 'error';
 
-  // Generate a deterministic, realistic heatmap dataset of 52 weeks x 7 days
-  const { weeks, totalContributions, maxStreak, currentStreak } = useMemo(() => {
-    const days: ContributionDay[] = [];
-    const startDate = new Date(year, 0, 1);
-    
-    // Seeded random for consistent, realistic distribution with active peaks
-    let seed = 42;
-    const seededRandom = () => {
-      seed = (seed * 9301 + 49297) % 233280;
-      return seed / 233280;
-    };
+/* ------------------------------------------------------------------ */
+/* GitHub GraphQL contribution calendar fetcher                         */
+/* ------------------------------------------------------------------ */
+async function fetchGitHubContributions(
+  username: string,
+  year: number,
+  token?: string
+): Promise<{ weeks: ContributionDay[][]; total: number; maxStreak: number; currentStreak: number }> {
+  if (!token) throw new Error('No GitHub token configured');
 
-    let total = 0;
-    let tempStreak = 0;
-    let maxStrk = 0;
-    let currStrk = 0;
+  const startDate = `${year}-01-01`;
+  const endDate = `${year}-12-31`;
 
-    for (let i = 0; i < 364; i++) {
-      const d = new Date(startDate);
-      d.setDate(d.getDate() + i);
+  const query = `
+    query ($login: String!, $startDate: DateTime!, $endDate: DateTime!) {
+      user(login: $login) {
+        contributionsCollection(from: $startDate, to: $endDate) {
+          contributionCalendar {
+            totalContributions
+            weeks {
+              contributionDays {
+                contributionCount
+                date
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  const res = await fetch('https://api.github.com/graphql', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ query, variables: { login: username, startDate, endDate } }),
+  });
+
+  if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+
+  const json = await res.json();
+  const cal = json?.data?.user?.contributionsCollection?.contributionCalendar;
+  if (!cal) throw new Error('No contribution data');
+
+  const allDays: ContributionDay[] = [];
+  let total = 0;
+  let tempStreak = 0;
+  let maxStrk = 0;
+  let currStrk = 0;
+
+  for (const week of cal.weeks) {
+    for (const day of week.contributionDays) {
+      const count = day.contributionCount;
+      const d = new Date(day.date);
       const dateStr = d.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
-        year: 'numeric'
+        year: 'numeric',
       });
-
-      const dayOfWeek = d.getDay(); // 0 is Sun, 6 is Sat
-      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-      const rand = seededRandom();
-
-      let count = 0;
-      // Weekday high commit distribution
-      if (!isWeekend) {
-        if (rand > 0.82) count = Math.floor(seededRandom() * 6) + 7;
-        else if (rand > 0.55) count = Math.floor(seededRandom() * 4) + 3;
-        else if (rand > 0.25) count = Math.floor(seededRandom() * 2) + 1;
-      } else {
-        if (rand > 0.65) count = Math.floor(seededRandom() * 3) + 1;
-      }
 
       let level: 0 | 1 | 2 | 3 | 4 = 0;
       if (count >= 7) level = 4;
@@ -81,26 +94,71 @@ export default function ContributionGraph({
         tempStreak = 0;
       }
 
-      days.push({
-        date: dateStr,
-        count,
-        level
-      });
+      allDays.push({ date: dateStr, count, level });
     }
+  }
 
-    // Chunk into 52 weeks of 7 days
-    const weekChunks: ContributionDay[][] = [];
-    for (let w = 0; w < 52; w++) {
-      weekChunks.push(days.slice(w * 7, (w + 1) * 7));
+  // Pad to 52 weeks (364 days) if needed
+  while (allDays.length < 364) {
+    allDays.push({ date: '', count: 0, level: 0 });
+  }
+
+  const weekChunks: ContributionDay[][] = [];
+  for (let w = 0; w < 52; w++) {
+    weekChunks.push(allDays.slice(w * 7, (w + 1) * 7));
+  }
+
+  return {
+    weeks: weekChunks,
+    total: cal.totalContributions ?? total,
+    maxStreak: maxStrk,
+    currentStreak: currStrk,
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* ContributionGraph Component                                         */
+/* ------------------------------------------------------------------ */
+export default function ContributionGraph({
+  username = 'Jxck007',
+  year = 2025,
+  className = '',
+}: ContributionGraphProps) {
+  const [hoveredDay, setHoveredDay] = useState<{
+    day: ContributionDay;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const [fetchState, setFetchState] = useState<FetchState>('idle');
+  const [graphData, setGraphData] = useState<{
+    weeks: ContributionDay[][];
+    total: number;
+    maxStreak: number;
+    currentStreak: number;
+  } | null>(null);
+
+  const token = import.meta.env.VITE_GITHUB_TOKEN as string | undefined;
+
+  const loadData = useCallback(async () => {
+    setFetchState('loading');
+    try {
+      const data = await fetchGitHubContributions(username, year, token);
+      setGraphData(data);
+      setFetchState('success');
+    } catch {
+      setFetchState('error');
     }
+  }, [username, year, token]);
 
-    return {
-      weeks: weekChunks,
-      totalContributions: total,
-      maxStreak: Math.max(maxStrk, 18),
-      currentStreak: Math.min(currStrk + 4, 12)
-    };
-  }, [year]);
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const weeks = graphData?.weeks ?? [];
+  const totalContributions = graphData?.total ?? 0;
+  const maxStreak = graphData?.maxStreak ?? 0;
+  const currentStreak = graphData?.currentStreak ?? 0;
 
   const monthLabels = [
     { name: 'Jan', col: 0 },
@@ -114,7 +172,7 @@ export default function ContributionGraph({
     { name: 'Sep', col: 35 },
     { name: 'Oct', col: 39 },
     { name: 'Nov', col: 43 },
-    { name: 'Dec', col: 48 }
+    { name: 'Dec', col: 48 },
   ];
 
   const getColorClass = (level: 0 | 1 | 2 | 3 | 4) => {
@@ -134,6 +192,102 @@ export default function ContributionGraph({
     }
   };
 
+  /* ── Loading State ─────────────────────────────────────────────── */
+  if (fetchState === 'loading') {
+    return (
+      <div
+        className={`relative w-full rounded-2xl bg-zinc-950/95 border border-zinc-700/80 p-5 sm:p-6 shadow-2xl space-y-5 text-left font-sans ${className}`}
+        id="github-contribution-graph"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-700 flex items-center justify-center text-white text-xl shadow-inner">
+              <SiGithub />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-sm font-bold text-white tracking-tight">
+                  @{username}
+                </span>
+              </div>
+              <p className="text-xs text-zinc-400 font-mono">
+                Loading contribution data...
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-12 gap-2 text-zinc-500">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span className="text-xs font-mono">Fetching GitHub activity</span>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Error / Fallback State ────────────────────────────────────── */
+  if (fetchState === 'error') {
+    return (
+      <div
+        className={`relative w-full rounded-2xl bg-zinc-950/95 border border-zinc-700/80 p-5 sm:p-6 shadow-2xl space-y-5 text-left font-sans ${className}`}
+        id="github-contribution-graph"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-700 flex items-center justify-center text-white text-xl shadow-inner">
+              <SiGithub />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-sm font-bold text-white tracking-tight">
+                  @{username}
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-900 text-zinc-500 border border-zinc-800">
+                  Offline
+                </span>
+              </div>
+              <p className="text-xs text-zinc-400 font-mono">
+                GitHub Production & System Archives
+              </p>
+            </div>
+          </div>
+
+          <a
+            href={`https://github.com/${username}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="cursor-target inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-zinc-500 text-xs font-mono text-white transition-all w-fit group"
+          >
+            <span>View GitHub Profile</span>
+            <ExternalLink className="w-3 h-3 text-zinc-400 group-hover:text-white transition-colors" />
+          </a>
+        </div>
+
+        <div className="flex flex-col items-center justify-center py-10 gap-3 text-center">
+          <AlertCircle className="w-8 h-8 text-zinc-600" />
+          <div className="space-y-1">
+            <p className="font-mono text-sm font-bold text-zinc-300">
+              Unable to load live contribution data
+            </p>
+            <p className="text-xs text-zinc-500 font-mono max-w-sm">
+              GitHub contribution data requires API authentication.
+              Visit the profile directly for live activity.
+            </p>
+          </div>
+          <a
+            href={`https://github.com/${username}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="cursor-target inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-zinc-200 transition-colors mt-2"
+          >
+            View Profile
+            <ExternalLink className="w-3 h-3" />
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Success State ─────────────────────────────────────────────── */
   return (
     <div
       className={`relative w-full rounded-2xl bg-zinc-950/95 border border-zinc-700/80 p-5 sm:p-6 shadow-2xl space-y-5 text-left font-sans ${className}`}
@@ -179,7 +333,7 @@ export default function ContributionGraph({
             Total Commits
           </span>
           <p className="text-lg sm:text-xl font-mono font-bold text-white tracking-tight">
-            {totalContributions}
+            {totalContributions.toLocaleString()}
           </p>
         </div>
 
@@ -250,7 +404,7 @@ export default function ContributionGraph({
               { label: 'Wed', dayIdx: 3 },
               { label: '', dayIdx: 4 },
               { label: 'Fri', dayIdx: 5 },
-              { label: '', dayIdx: 6 }
+              { label: '', dayIdx: 6 },
             ].map(({ label, dayIdx }) => (
               <tr key={dayIdx} className="h-3">
                 <th
@@ -279,7 +433,7 @@ export default function ContributionGraph({
                         setHoveredDay({
                           day,
                           x: rect.left + rect.width / 2,
-                          y: rect.top - 8
+                          y: rect.top - 8,
                         });
                       }}
                       onMouseLeave={() => setHoveredDay(null)}
@@ -308,7 +462,7 @@ export default function ContributionGraph({
               className="fixed z-50 pointer-events-none -translate-x-1/2 -translate-y-full px-2.5 py-1.5 rounded-lg bg-zinc-900 text-white text-[11px] font-mono border border-zinc-600 shadow-2xl backdrop-blur-md"
               style={{
                 left: hoveredDay.x,
-                top: hoveredDay.y
+                top: hoveredDay.y,
               }}
             >
               <div className="font-bold">

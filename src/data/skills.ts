@@ -108,17 +108,17 @@ export const SKILLS_DATA: Record<string, SkillDetail> = {
     color: '#22d3ee',
     tags: ['Mobile (iOS & Android)', 'Widgets', 'High FPS', 'Cross-Platform']
   },
-  reactnative: {
-    id: 'reactnative',
-    name: 'React Native',
-    category: 'backend',
-    categoryLabel: 'Mobile Framework',
-    description: 'Framework for building native Android and iOS mobile applications using React and JavaScript/TypeScript component models.',
-    experienceSummary: 'Creating native bridge integrations, animated gesture handlers, and performant cross-platform mobile apps.',
-    officialUrl: 'https://reactnative.dev/',
-    iconName: 'SiReact',
-    color: '#22d3ee',
-    tags: ['Native Bridge', 'React Hooks', 'Mobile Ecosystem', 'Expo']
+  typescript: {
+    id: 'typescript',
+    name: 'TypeScript',
+    category: 'languages',
+    categoryLabel: 'Language',
+    description: 'Static type superset of JavaScript that adds compile-time type checking, interfaces, generics, and enhanced IDE support for large-scale applications.',
+    experienceSummary: 'Building type-safe SPAs, API schemas, and shared type contracts across frontend and backend codebases.',
+    officialUrl: 'https://www.typescriptlang.org/',
+    iconName: 'SiTypescript',
+    color: '#3178c6',
+    tags: ['Type Safety', 'Interfaces', 'Generics', 'Full-Stack']
   },
   sqlalchemy: {
     id: 'sqlalchemy',

@@ -7,10 +7,15 @@ let droneOsc1: OscillatorNode | null = null;
 let droneOsc2: OscillatorNode | null = null;
 let lfoNode: OscillatorNode | null = null;
 
-// Initialize the Audio Context safely
+// Initialize the Audio Context safely — wrapped so a failure never blocks rendering.
 function getAudioContext(): AudioContext {
   if (!audioCtx) {
-    audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    try {
+      audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    } catch {
+      // AudioContext unavailable — continue silently without audio.
+      return null as unknown as AudioContext;
+    }
   }
   return audioCtx;
 }
@@ -23,8 +28,11 @@ function getAudioContext(): AudioContext {
 export function startAmbientPad() {
   try {
     const ctx = getAudioContext();
+    if (!ctx) return;
     if (ctx.state === "suspended") {
-      ctx.resume();
+      // resume() may reject if called outside a user-gesture context;
+      // catch it so it never propagates as an unhandled rejection.
+      ctx.resume().catch(() => {});
     }
 
     // Guard against multiple initializations
@@ -97,8 +105,9 @@ export function startAmbientPad() {
 export function playWarpWhoosh() {
   try {
     const ctx = getAudioContext();
+    if (!ctx) return;
     if (ctx.state === "suspended") {
-      ctx.resume();
+      ctx.resume().catch(() => {});
     }
 
     const duration = 0.8;

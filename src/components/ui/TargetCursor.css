@@ -55,3 +55,18 @@
   border-right: none;
   border-top: none;
 }
+
+/* ─── Touch-device active feedback ─── */
+@media (pointer: coarse) {
+  .cursor-target:active {
+    transform: scale(0.97);
+    opacity: 0.85;
+    transition: transform 0.1s ease-out, opacity 0.1s ease-out;
+  }
+
+  /* Ensure touch targets are large enough (min 44x44 per WCAG) */
+  .cursor-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

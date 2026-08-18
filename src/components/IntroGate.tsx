@@ -1,11 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ParticleTextEffect } from "./ui/particle-text-effect";
+import ParticleIntro, { type ParticleIntroHandle } from "./particles/ParticleIntro";
 import IntroPlaceholder from "./IntroPlaceholder";
 import { startAmbientPad, playWarpWhoosh } from "../utils/audio";
-
-const INTRO_WORDS = ["JXCK"];
-const MORPH_INTERVAL_MS = 2000; // Auto-morph every 2 seconds
 
 interface IntroGateProps {
   isEntered?: boolean;
@@ -13,11 +10,11 @@ interface IntroGateProps {
 }
 
 export default function IntroGate({ isEntered: propIsEntered, onEnterStateChange }: IntroGateProps) {
-  const [wordIndex, setWordIndex] = useState(0);
   const [internalEntered, setInternalEntered] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
-  const [isSettled, setIsSettled] = useState(false);
+  const [heroReady, setHeroReady] = useState(false);
+  const introRef = useRef<ParticleIntroHandle>(null);
 
   const isEntered = propIsEntered !== undefined ? propIsEntered : internalEntered;
 
@@ -25,7 +22,7 @@ export default function IntroGate({ isEntered: propIsEntered, onEnterStateChange
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setReducedMotion(mediaQuery.matches);
-    
+
     const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
     mediaQuery.addEventListener("change", handler);
     return () => mediaQuery.removeEventListener("change", handler);
@@ -46,71 +43,58 @@ export default function IntroGate({ isEntered: propIsEntered, onEnterStateChange
     };
   }, []);
 
-  // Morphing Sequence Controller (Starts automatically on page load)
-  useEffect(() => {
-    if (reducedMotion) {
-      // If user prefers reduced motion, skip morphing sequence and show final state JXCK directly
-      setWordIndex(INTRO_WORDS.length - 1);
-      setIsSettled(true);
-      return;
-    }
-
-    if (wordIndex < INTRO_WORDS.length - 1) {
-      const timer = setTimeout(() => {
-        setWordIndex((prev) => prev + 1);
-      }, MORPH_INTERVAL_MS);
-      return () => clearTimeout(timer);
-    } else {
-      // The final word "JXCK" has settled
-      const settleTimer = setTimeout(() => {
-        setIsSettled(true);
-      }, 600);
-      return () => clearTimeout(settleTimer);
-    }
-  }, [wordIndex, reducedMotion]);
-
-  // Trigger smooth portal transition to hero placeholder
-  const triggerEnterPortal = () => {
-    if (isTransitioning || isEntered) return;
+  // Finish the intro: warp whoosh + portal swap (called once by the choreography)
+  const performEnter = () => {
+    if (isEntered) return;
     setIsTransitioning(true);
     playWarpWhoosh();
-
-    // Snappy transition to the main section
     setTimeout(() => {
       setInternalEntered(true);
       if (onEnterStateChange) {
         onEnterStateChange(true);
       }
+      // Trigger the staggered hero reveal after the portal swap completes.
+      // A short delay lets the hero mount and stabilise before content fades in.
+      setTimeout(() => setHeroReady(true), 100);
     }, 600);
   };
 
-  // Keyboard accessibility: Enter or Space key anywhere triggers portal entry
+  // Kick off the particle choreography (or skip straight to enter for reduced motion)
+  const handleStart = () => {
+    if (isEntered || isTransitioning) return;
+    if (reducedMotion) {
+      performEnter();
+      return;
+    }
+    setIsTransitioning(true);
+    introRef.current?.start();
+  };
+
+  // Keyboard accessibility: Enter or Space anywhere starts the intro
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
         e.preventDefault();
-        triggerEnterPortal();
+        handleStart();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isTransitioning, isEntered]);
-
-  const activeWord = INTRO_WORDS[wordIndex];
+  }, [isTransitioning, isEntered, reducedMotion]);
 
   if (isEntered) {
     return (
       <div className="relative w-full min-h-screen bg-transparent text-white cursor-default" id="portfolio-main-root">
         <IntroPlaceholder
           key="placeholder-viewport"
+          heroReady={heroReady}
           onReset={() => {
-            setWordIndex(0);
             setInternalEntered(false);
+            setHeroReady(false);
             if (onEnterStateChange) {
               onEnterStateChange(false);
             }
             setIsTransitioning(false);
-            setIsSettled(false);
           }}
         />
       </div>
@@ -119,17 +103,17 @@ export default function IntroGate({ isEntered: propIsEntered, onEnterStateChange
 
   return (
     <div
-      onClick={triggerEnterPortal}
+      onClick={handleStart}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          triggerEnterPortal();
+          handleStart();
         }
       }}
       tabIndex={0}
       role="button"
       aria-label="Intro animation, click or tap anywhere to enter portfolio"
-      className="relative w-full h-screen bg-transparent text-white overflow-hidden flex flex-col items-center justify-center select-none cursor-pointer outline-none"
+      className="relative w-full min-h-[100dvh] bg-transparent text-white overflow-hidden flex flex-col items-center justify-center select-none cursor-pointer outline-none"
       id="intro-gate-container"
     >
       <AnimatePresence mode="wait">
@@ -161,10 +145,10 @@ export default function IntroGate({ isEntered: propIsEntered, onEnterStateChange
               transition={{ delay: 0.1, duration: 1.0 }}
             >
               <div className="absolute w-72 h-24 rounded-full bg-white/5 blur-[80px] pointer-events-none" />
-              <ParticleTextEffect
-                text={activeWord}
-                disperse={false}
-                className="w-full h-full"
+              <ParticleIntro
+                ref={introRef}
+                reducedMotion={reducedMotion}
+                onReveal={performEnter}
               />
             </motion.div>
           </div>

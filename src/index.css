@@ -129,6 +129,15 @@
     }
 }
 
+/* Hide scrollbar for horizontal scroll containers */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
 .page-enter {
   animation: pageEnter 240ms ease both;
 }

@@ -3,13 +3,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import IntroGate from "./components/IntroGate";
 import DestinationPage from "./components/DestinationPage";
 import { AnimatePresence, motion } from "motion/react";
 import Waves from "./components/ui/Waves";
-import PixelBlast from "./components/ui/PixelBlast";
+
+// Lazy-load PixelBlast so it only mounts AFTER the intro completes.
+// This prevents two WebGL renderers from competing for context during startup,
+// which caused "Context Lost" and a blank white page.
+const PixelBlast = lazy(() => import("./components/ui/PixelBlast"));
 
 export default function App() {
   const location = useLocation();
@@ -51,31 +55,35 @@ export default function App() {
       </motion.div>
 
       {/* Post-Intro Website Background: React Bits PixelBlast */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: !showIntroBg ? 1 : 0 }}
-        transition={{ duration: 0.8, ease: "easeInOut" }}
-        className={`fixed inset-0 z-0 overflow-hidden select-none ${!showIntroBg ? "pointer-events-none" : "pointer-events-none"}`}
-        id="pixelblast-bg-container"
-        aria-hidden="true"
-      >
-        <PixelBlast
-          variant="circle"
-          pixelSize={5}
-          color="#ffffff"
-          patternScale={4.5}
-          patternDensity={0.35}
-          pixelSizeJitter={0.45}
-          enableRipples={true}
-          rippleSpeed={0.45}
-          rippleThickness={0.14}
-          rippleIntensityScale={2.2}
-          liquid={false}
-          speed={0.8}
-          edgeFade={0.2}
-          transparent={true}
-        />
-      </motion.div>
+      {!showIntroBg && (
+        <Suspense fallback={null}>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            className="fixed inset-0 z-0 overflow-hidden select-none pointer-events-none"
+            id="pixelblast-bg-container"
+            aria-hidden="true"
+          >
+            <PixelBlast
+              variant="circle"
+              pixelSize={5}
+              color="#ffffff"
+              patternScale={5.5}
+              patternDensity={0.18}
+              pixelSizeJitter={0.45}
+              enableRipples={true}
+              rippleSpeed={0.45}
+              rippleThickness={0.14}
+              rippleIntensityScale={1.4}
+              liquid={false}
+              speed={0.6}
+              edgeFade={0.3}
+              transparent={true}
+            />
+          </motion.div>
+        </Suspense>
+      )}
 
       {/* Persisting Responsive Grid Background */}
       <div 
