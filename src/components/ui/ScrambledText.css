@@ -1,0 +1,17 @@
+.text-block {
+  margin: 0 auto;
+  font-family: inherit;
+  color: #fff;
+}
+
+.text-block p {
+  margin: 0;
+  line-height: inherit;
+}
+
+.char {
+  will-change: transform, opacity;
+  display: inline-block;
+  white-space: pre-wrap;
+}
+

@@ -1,0 +1,129 @@
+/* Sizing Metrics & Root Constants */
+:root {
+  --card-width: calc(100vw - 32px);
+  --card-height: 560px;
+  --card-gap: 24px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --card-width: 82vw;
+    --card-height: 520px;
+    --card-gap: 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --card-width: clamp(620px, 68vw, 980px);
+    --card-height: clamp(420px, 62vh, 650px);
+    --card-gap: 48px;
+  }
+}
+
+/* Sizing Container Boundaries */
+.carousel-card-container {
+  width: var(--card-width);
+  height: var(--card-height);
+  flex-shrink: 0;
+  perspective: 1200px; /* Enhanced 3D viewport */
+}
+
+@media (max-width: 767px) {
+  .carousel-card-container {
+    height: auto;
+    min-height: 560px;
+  }
+  
+  .project-card-wrapper {
+    flex-direction: column !important;
+  }
+}
+
+/* 3D Track Layout and Horizontal Rail */
+.carousel-cards-track {
+  display: flex;
+  align-items: center;
+  gap: var(--card-gap);
+  height: 100%;
+  will-change: transform;
+}
+
+.project-carousel-rail {
+  position: absolute;
+  top: 50%;
+  left: -50vw;
+  right: -50vw;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.04) 75%,
+    transparent 100%
+  );
+  transform: translateY(-50%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* PixelCard Integration & Layering Fixes */
+.project-pixel-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 22px;
+  overflow: hidden;
+  isolation: isolate;
+  background-color: rgb(10, 10, 10);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  transition: border-color 0.4s ease;
+}
+
+.project-pixel-card:focus-within,
+.project-pixel-card:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.project-pixel-card .pixel-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.project-card-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+}
+
+.project-pixel-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.02) 0%,
+    rgba(0, 0, 0, 0.5) 100%
+  );
+}
+
+/* Styling Accents and Focus Rings */
+button:focus-visible,
+a:focus-visible {
+  outline: 1px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 3px;
+}
+
+/* Mobile responsive card adjustments */
+@media (max-width: 640px) {
+  .project-pixel-card {
+    border-radius: 16px;
+  }
+}

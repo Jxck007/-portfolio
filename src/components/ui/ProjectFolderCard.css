@@ -1,0 +1,200 @@
+/* Pixel Canvas Base */
+.pixel-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+.pixel-card {
+  height: 420px;
+  width: 100%;
+  max-width: 340px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  isolation: isolate;
+  background-color: #09090b;
+  user-select: none;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.pixel-card:hover,
+.pixel-card:focus-within {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.pixel-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, #09090b, transparent 85%);
+  opacity: 0;
+  transition: opacity 800ms cubic-bezier(0.5, 1, 0.89, 1);
+  pointer-events: none;
+}
+
+.pixel-card:hover::before,
+.pixel-card:focus-within::before {
+  opacity: 1;
+}
+
+/* Layering Controls */
+.card-overlay-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+  padding: 2.5rem 1.5rem 1.5rem;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.folder-container,
+.card-meta {
+  pointer-events: auto;
+}
+
+.folder-container {
+  margin-top: 1.5rem;
+}
+
+.card-meta {
+  text-align: center;
+  width: 100%;
+}
+
+.card-meta h3 {
+  color: #f8fafc;
+  font-size: 1.15rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+  letter-spacing: -0.02em;
+}
+
+.card-meta p {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  margin: 0;
+  font-weight: 300;
+}
+
+/* Folder Component Styles */
+.folder {
+  transition: transform 0.2s ease-in;
+  cursor: pointer;
+  outline: none;
+}
+
+.folder:hover {
+  transform: translateY(-8px);
+}
+
+.folder.open {
+  transform: translateY(-8px);
+}
+
+.folder__back {
+  position: relative;
+  width: 100px;
+  height: 80px;
+  background: var(--folder-back-color);
+  border-radius: 0px 10px 10px 10px;
+}
+
+.folder__back::after {
+  position: absolute;
+  bottom: 98%;
+  left: 0;
+  content: '';
+  width: 30px;
+  height: 10px;
+  background: var(--folder-back-color);
+  border-radius: 5px 5px 0 0;
+}
+
+.paper {
+  position: absolute;
+  z-index: 2;
+  bottom: 10%;
+  left: 50%;
+  transform: translate(-50%, 10%);
+  width: 70%;
+  height: 80%;
+  background: var(--paper-1);
+  border-radius: 8px;
+  transition: transform 0.3s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.paper:nth-child(2) {
+  background: var(--paper-2);
+  width: 80%;
+  height: 70%;
+}
+
+.paper:nth-child(3) {
+  background: var(--paper-3);
+  width: 90%;
+  height: 60%;
+}
+
+.folder.open .paper:nth-child(1) {
+  transform: translate(calc(-120% + var(--magnet-x, 0px)), calc(-70% + var(--magnet-y, 0px))) rotateZ(-15deg);
+}
+
+.folder.open .paper:nth-child(2) {
+  transform: translate(calc(10% + var(--magnet-x, 0px)), calc(-70% + var(--magnet-y, 0px))) rotateZ(15deg);
+}
+
+.folder.open .paper:nth-child(3) {
+  transform: translate(calc(-50% + var(--magnet-x, 0px)), calc(-100% + var(--magnet-y, 0px))) rotateZ(5deg);
+}
+
+.folder__front {
+  position: absolute;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  background: var(--folder-color);
+  border-radius: 5px 10px 10px 10px;
+  transform-origin: bottom;
+  transition: transform 0.3s ease-in-out;
+}
+
+.folder:hover .folder__front,
+.folder.open .folder__front {
+  transform: skew(15deg) scaleY(0.6);
+}
+
+.folder:hover .right,
+.folder.open .right {
+  transform: skew(-15deg) scaleY(0.6);
+}
+
+/* File Badge Styles */
+.file-chip {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 5px;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+.chip-pink   { background: #fecdd3; color: #9f1239; }
+.chip-blue   { background: #e0f2fe; color: #075985; }
+.chip-yellow { background: #fef08a; color: #854d0e; }
+.chip-emerald{ background: #d1fae5; color: #065f46; }
+.chip-purple { background: #ede9fe; color: #5b21b6; }
+.chip-indigo { background: #e0e7ff; color: #3730a3; }

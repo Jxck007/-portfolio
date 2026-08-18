@@ -1,0 +1,231 @@
+/* --------------------------------------------------
+   LAUNCHPAD LAYOUT & STRUCTURE
+   -------------------------------------------------- */
+
+:root {
+  --header-height: 80px;
+  --footer-height: 60px;
+}
+
+.launchpad-menu {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+}
+
+.launchpad-content {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr)
+                         minmax(300px, 1.2fr)
+                         minmax(220px, 0.8fr);
+  align-items: center;
+  gap: clamp(24px, 4vw, 72px);
+  width: min(1400px, calc(100% - 64px));
+  height: calc(100dvh - var(--header-height) - var(--footer-height));
+  margin: 0 auto;
+  transition:
+    opacity 180ms ease,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  background: transparent !important;
+}
+
+.launchpad-content[data-state="leaving"] {
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+}
+
+/* Explicit stacking */
+.launchpad-copy,
+.launchpad-description {
+  position: relative;
+  z-index: 5;
+}
+
+.launchpad-visual {
+  position: relative;
+  z-index: 2;
+}
+
+/* --------------------------------------------------
+   COLUMNS & TEXT STYLING
+   -------------------------------------------------- */
+
+.launchpad-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.face-title {
+  font-size: clamp(3.5rem, 7vw, 7.5rem);
+  line-height: 0.85;
+  letter-spacing: -0.055em;
+  max-width: 7ch;
+  font-weight: 500;
+  color: #ffffff;
+  text-transform: uppercase;
+  word-break: normal;
+  hyphens: none;
+}
+
+.launchpad-description {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.face-description {
+  font-size: clamp(1rem, 1.4vw, 1.2rem);
+  line-height: 1.5;
+  max-width: 25ch;
+  color: #a1a1aa;
+}
+
+/* --------------------------------------------------
+   ACTIVE CIRCLE STYLING
+   -------------------------------------------------- */
+
+.active-circle-container {
+  position: relative;
+  width: clamp(280px, 34vw, 470px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.active-circle-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.15); /* Thin off-white outline */
+  outline: 1px solid rgba(255, 255, 255, 0.05); /* Darker outer border */
+}
+
+/* --------------------------------------------------
+   ENTER ARROW BUTTON
+   -------------------------------------------------- */
+
+.action-button {
+  position: relative;
+  margin-top: 1.5rem;
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  background: #f4f4f5;
+  border: 1px solid rgba(0, 0, 0, 0.8);
+  border-radius: 50%;
+  cursor: pointer;
+  color: #000;
+  z-index: 10;
+  transition: border-color 0.3s ease, color 0.3s ease, transform 180ms ease, opacity 180ms ease;
+}
+
+.action-button:hover {
+  border-color: #fff;
+  background: #ffffff;
+}
+
+.action-button:focus-visible {
+  outline: 1px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 3px;
+}
+
+/* Arrow moves diagonally by approximately 4px when clicked/leaving */
+.action-button.leaving-arrow {
+  transform: translate(3px, -3px);
+  opacity: 0;
+}
+
+/* --------------------------------------------------
+   BOTTOM INSTRUCTIONS
+   -------------------------------------------------- */
+
+.launchpad-instructions {
+  width: min(1400px, calc(100% - 64px));
+  margin: 0 auto;
+  padding: 1rem 0;
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* --------------------------------------------------
+   RESPONSIVE DESIGN (BELOW 900PX)
+   -------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .launchpad-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 1.5rem;
+    height: auto;
+    min-height: calc(100dvh - var(--header-height, 80px) - var(--footer-height, 60px) - 40px);
+    padding: 1rem 20px;
+    width: 100%;
+  }
+
+  /* Force single column vertical order */
+  .launchpad-copy {
+    order: 1;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .active-circle-container {
+    order: 2;
+    width: min(78vw, 360px);
+  }
+
+  .action-button {
+    order: 3;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .launchpad-description {
+    order: 4;
+    align-items: center;
+    text-align: center;
+  }
+
+  .face-title {
+    max-width: 100%;
+    text-align: center;
+    line-height: 1.0;
+    margin-top: 0.25rem;
+  }
+
+  .face-description {
+    text-align: center;
+    max-width: 100%;
+  }
+}
+
+/* Prefers Reduced Motion override */
+@media (prefers-reduced-motion: reduce) {
+  .launchpad-content {
+    transition: opacity 100ms ease !important;
+    transform: none !important;
+  }
+  .launchpad-content[data-state="leaving"] {
+    opacity: 0 !important;
+    transform: none !important;
+  }
+  .action-button.leaving-arrow {
+    transform: none !important;
+    opacity: 0 !important;
+  }
+}
