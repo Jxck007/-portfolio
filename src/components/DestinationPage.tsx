@@ -43,7 +43,7 @@ export default function DestinationPage() {
       <div className="relative z-20 flex flex-col p-8 md:p-16 min-h-screen text-white">
         <button 
           onClick={handleBack}
-          className="self-start text-xs font-mono tracking-widest text-white/40 hover:text-white transition-colors uppercase cursor-pointer"
+          className="cursor-target self-start text-xs font-mono tracking-widest text-white/40 hover:text-white transition-colors uppercase cursor-pointer"
         >
           ← Return to Launchpad
         </button>
@@ -55,7 +55,7 @@ export default function DestinationPage() {
           className="flex-1 flex flex-col items-start justify-center max-w-4xl"
         >
            <span className="text-xs font-mono tracking-widest text-white/40 uppercase mb-4">Destination Node</span>
-           <h1 className="text-6xl md:text-8xl font-medium tracking-tighter uppercase mb-6">{section}</h1>
+           <h1 className="text-5xl sm:text-6xl md:text-8xl font-medium tracking-tighter uppercase mb-6">{section}</h1>
            <p className="text-neutral-400 font-light text-lg md:text-xl max-w-2xl leading-relaxed">
              This module contains detailed telemetry and archival data regarding the requested subject. Secure connection established.
            </p>

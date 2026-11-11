@@ -1,7 +1,6 @@
 import aboutImg from '../assets/images/portfolio_about_1783853603938.jpg';
 import projectsImg from '../assets/images/portfolio_projects_1783853616443.jpg';
 import experienceImg from '../assets/images/portfolio_experience_1783853628956.jpg';
-import skillsImg from '../assets/images/portfolio_skills_1783853639171.jpg';
 import contactImg from '../assets/images/portfolio_contact_1783853651642.jpg';
 
 export interface Project {

@@ -6,6 +6,7 @@ import { projects, archiveProjects, type Project } from '../../data/projects';
 import { SiGithub } from 'react-icons/si';
 import { ExternalLink, LayoutGrid, Layers, FolderGit2, ChevronDown, ChevronUp } from 'lucide-react';
 import type { RefObject } from 'react';
+import { useReducedMotion } from '../../utils/useReducedMotion';
 
 interface ProjectsSectionProps {
   sectionRef: RefObject<HTMLElement | null>;
@@ -13,19 +14,11 @@ interface ProjectsSectionProps {
 
 /* ── Grid Card ────────────────────────────────────────────────────────── */
 
-function GridCard({ project, index, key }: { project: Project; index: number; key?: React.Key }) {
+function GridCard({ project, index }: { project: Project; index: number; key?: React.Key }) {
   const navigate = useNavigate();
   const [imageFailed, setImageFailed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReducedMotion(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
+  const reducedMotion = useReducedMotion();
 
   const initials = project.title
     .split(' ')
@@ -51,7 +44,7 @@ function GridCard({ project, index, key }: { project: Project; index: number; ke
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-6% 0px' }}
       transition={{ duration: 0.5, delay: Math.min(index * 0.08, 0.32), ease: [0.16, 1, 0.3, 1] }}
-      className="group relative flex flex-col rounded-xl bg-zinc-950/90 border border-zinc-800 overflow-hidden transition-colors duration-300 hover:border-zinc-600/80 focus-within:border-zinc-600/80"
+      className="group relative flex flex-col rounded-xl bg-zinc-950/90 border border-zinc-800 overflow-hidden transition-colors duration-300 hover:border-zinc-600/80 focus-within:border-zinc-600/80 cursor-target"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onFocus={() => setIsHovered(true)}
@@ -89,21 +82,21 @@ function GridCard({ project, index, key }: { project: Project; index: number; ke
       </div>
 
       {/* ── Card Body ──────────────────────────────────────────────── */}
-      <div className="flex flex-col flex-1 p-4 space-y-2">
+      <div className="flex flex-col flex-1 p-4 space-y-2.5">
         {/* Metadata Row: Number / Year / Status */}
         <div className="flex items-center gap-2 text-[10px] font-mono text-zinc-400 tracking-wider uppercase flex-wrap">
-          <span className="text-white font-semibold bg-zinc-900 px-1.5 py-0.5 rounded">
+          <span className="text-white font-semibold bg-zinc-900 border border-zinc-800 px-1.5 py-0.5 rounded-md">
             {project.number}
           </span>
-          <span className="text-zinc-700">/</span>
+          <span className="text-zinc-600">•</span>
           <span>{project.year}</span>
           {project.status && (
             <>
-              <span className="text-zinc-700">/</span>
+              <span className="text-zinc-600">•</span>
               <span className="flex items-center gap-1.5 text-zinc-300">
                 <span className={`w-1.5 h-1.5 rounded-full ${
                   project.status.toLowerCase().includes('live') || project.status.toLowerCase().includes('active')
-                    ? 'bg-white'
+                    ? 'bg-white animate-pulse'
                     : 'bg-zinc-500'
                 }`} />
                 {project.status}
@@ -113,33 +106,21 @@ function GridCard({ project, index, key }: { project: Project; index: number; ke
         </div>
 
         {/* Title */}
-        <h3 className="font-sans font-semibold tracking-tight text-white text-sm leading-tight group-hover:text-zinc-200 transition-colors">
+        <h3 className="font-mono font-bold tracking-tight text-white text-base leading-tight group-hover:text-zinc-200 transition-colors">
           {project.title}
         </h3>
 
         {/* Description */}
-        <p className="text-zinc-400 text-[11px] leading-relaxed line-clamp-2 flex-1">
+        <p className="text-zinc-400 text-xs font-sans leading-relaxed line-clamp-2 flex-1">
           {project.shortDescription}
         </p>
 
-        {/* Highlights */}
-        {project.highlights && project.highlights.length > 0 && (
-          <ul className="space-y-0.5 pt-1.5 border-t border-zinc-800/60">
-            {project.highlights.slice(0, 2).map((hl, i) => (
-              <li key={i} className="text-[10px] font-mono text-zinc-500 flex items-start gap-1.5">
-                <span className="text-zinc-600 mt-0.5 shrink-0">›</span>
-                <span className="line-clamp-1">{hl}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-
         {/* Tech Tags */}
-        <div className="flex flex-wrap gap-1 pt-0.5">
+        <div className="flex flex-wrap gap-1.5 pt-1">
           {project.technologies.map((tech) => (
             <span
               key={tech}
-              className="px-1.5 py-px rounded bg-zinc-900 border border-zinc-800 text-[8px] font-mono text-zinc-400"
+              className="px-2 py-0.5 rounded-md bg-zinc-900 border border-zinc-800 text-[10px] font-mono text-zinc-300"
             >
               {tech}
             </span>
@@ -147,12 +128,12 @@ function GridCard({ project, index, key }: { project: Project; index: number; ke
         </div>
 
         {/* ── Actions ──────────────────────────────────────────────── */}
-        <div className="pt-2 border-t border-zinc-800/60 flex flex-wrap items-center gap-2.5 mt-auto">
+        <div className="pt-2 border-t border-zinc-800/80 flex flex-wrap items-center justify-between gap-2 mt-auto">
           {/* Primary: View Case Study */}
           <button
             onClick={handleCaseStudy}
             onKeyDown={handleKeyDown}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white text-black font-mono text-[11px] tracking-wider uppercase hover:bg-zinc-200 transition-colors rounded-sm font-semibold cursor-pointer shrink-0 group/btn"
+            className="cursor-target inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white text-black font-mono text-[11px] tracking-wider uppercase hover:bg-zinc-200 transition-all rounded-md font-bold cursor-pointer shrink-0 group/btn"
             aria-label={`View case study for ${project.title}`}
           >
             <span>Case Study</span>
@@ -167,35 +148,37 @@ function GridCard({ project, index, key }: { project: Project; index: number; ke
             </svg>
           </button>
 
-          {/* Secondary: Live Site */}
-          {project.liveUrl && (
-            <a
-              href={project.liveUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1 text-[10px] font-mono tracking-wider text-zinc-500 hover:text-white transition-colors uppercase border-b border-transparent hover:border-white pb-0.5"
-              aria-label={`Open live site for ${project.title}`}
-            >
-              Live
-              <ExternalLink className="w-2.5 h-2.5" />
-            </a>
-          )}
+          <div className="flex items-center gap-3">
+            {/* Secondary: Live Site */}
+            {project.liveUrl && (
+              <a
+                href={project.liveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="cursor-target inline-flex items-center gap-1 text-[10px] font-mono tracking-wider text-zinc-400 hover:text-white transition-colors uppercase border-b border-zinc-800 hover:border-white pb-0.5"
+                aria-label={`Open live site for ${project.title}`}
+              >
+                Live
+                <ExternalLink className="w-2.5 h-2.5" />
+              </a>
+            )}
 
-          {/* Secondary: Source */}
-          {project.githubUrl && (
-            <a
-              href={project.githubUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1 text-[10px] font-mono tracking-wider text-zinc-500 hover:text-white transition-colors uppercase border-b border-transparent hover:border-white pb-0.5"
-              aria-label={`Open source repository for ${project.title}`}
-            >
-              <span className="inline-flex"><SiGithub /></span>
-              Source
-            </a>
-          )}
+            {/* Secondary: Source */}
+            {project.githubUrl && (
+              <a
+                href={project.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="cursor-target inline-flex items-center gap-1 text-[10px] font-mono tracking-wider text-zinc-400 hover:text-white transition-colors uppercase border-b border-zinc-800 hover:border-white pb-0.5"
+                aria-label={`Open source repository for ${project.title}`}
+              >
+                <span className="inline-flex"><SiGithub /></span>
+                Source
+              </a>
+            )}
+          </div>
         </div>
       </div>
     </motion.article>
@@ -207,15 +190,7 @@ function GridCard({ project, index, key }: { project: Project; index: number; ke
 export default function ProjectsSection({ sectionRef }: ProjectsSectionProps) {
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
   const [projectViewMode, setProjectViewMode] = useState<'grid' | 'stack'>('grid');
-  const [reducedMotion, setReducedMotion] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReducedMotion(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
+  const reducedMotion = useReducedMotion();
 
   /* 3D Stack card content (preserved from existing implementation) */
   const projectStackCards = projects.map((p) => (

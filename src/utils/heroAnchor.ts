@@ -35,18 +35,29 @@ const HEADER_H = 54; // sticky header (~py-3 + content)
 const WRAPPER_PT = 32; // py-8 on the content wrapper
 const SECTION_PT = 16; // pt-4 on the hero section
 const TEXT_COL_H = 420; // estimated hero text column height on md+ (eyebrow + h1 + rotating box + bio + 2 CTAs)
+const TEXT_COL_H_MOBILE = 310; // estimated mobile text block height (same elements, space-y-4, text-[2rem] h1)
 
 export function getAvatarAnchor(vw: number, vh: number): AvatarAnchor {
   if (vw < 768) {
-    // Mobile: single column — the avatar is centred below the text (below the
-    // fold on most phones). The face is clamped into a visible band so the
-    // FACE stage is actually seen during the reveal; there is no jump because
-    // the face scatters before the hero content fades in.
+    // Mobile: single column, identity-led vertical composition — text block
+    // first, avatar centred below it. Mirror the real flow (sticky header +
+    // wrapper padding + centred section row) so the FACE resolves close to
+    // where the avatar actually renders, then clamp into a visible band so
+    // the face never forms off-screen on short viewports. The residual offset
+    // is masked by the hero-reveal scatter (no teleport feel).
     const pad = vw < 640 ? 16 : 32; // px-4 / sm:px-8
     const maxW = vw < 640 ? 340 : 400; // max-w-[340px] / sm:max-w-[400px]
     const widthPx = Math.min(maxW, vw - pad * 2);
     const heightPx = widthPx / AVATAR_ASPECT;
-    return { nx: 0.5, ny: 0.55, heightFrac: heightPx / vh, widthPx };
+    const gap = 24; // gap-6 on mobile (sm:gap-8)
+    const sectionTop = HEADER_H + WRAPPER_PT + 16; // header + wrapper py-8 + section pt-4
+    const rowH = TEXT_COL_H_MOBILE + gap + heightPx;
+    const sectionH = Math.max(0.8 * vh, rowH);
+    let centerY = sectionTop + sectionH / 2;
+    const minCenter = heightPx / 2 + vh * 0.04;
+    const maxCenter = vh * 0.72;
+    centerY = Math.min(Math.max(centerY, minCenter), maxCenter);
+    return { nx: 0.5, ny: centerY / vh, heightFrac: heightPx / vh, widthPx };
   }
 
   // md+: avatar in the right 5/12 column, right-aligned (md:justify-end),

@@ -78,18 +78,27 @@ const ParticleIntro = forwardRef<ParticleIntroHandle, ParticleIntroProps>(
       );
     };
 
-    // Pointer interaction — only during the "text" state, only on devices
-    // with a fine pointer (desktop). Touch devices get no cursor-following.
-    const hasFinePointer = window.matchMedia("(pointer: fine)").matches;
+    // Pointer & Touch interaction — enables particle repulsion on desktop and mobile touchscreens
     const mouseActiveRef = { current: false };
 
-    const handlePointerMove = (e: PointerEvent) => {
-      if (!hasFinePointer || stateRef.current !== "text") return;
+    const handlePointerMove = (e: PointerEvent | TouchEvent) => {
+      if (stateRef.current !== "text") return;
       const el = containerRef.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
-      const nx = (e.clientX - rect.left) / rect.width;
-      const ny = (e.clientY - rect.top) / rect.height;
+      let clientX = 0;
+      let clientY = 0;
+      if ("touches" in e && e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else if ("clientX" in e) {
+        clientX = (e as PointerEvent).clientX;
+        clientY = (e as PointerEvent).clientY;
+      } else {
+        return;
+      }
+      const nx = (clientX - rect.left) / rect.width;
+      const ny = (clientY - rect.top) / rect.height;
       const eng = engineRef.current;
       if (eng) eng.setMouse(nx, ny);
       mouseActiveRef.current = true;
@@ -174,19 +183,25 @@ const ParticleIntro = forwardRef<ParticleIntroHandle, ParticleIntroProps>(
       };
       avatar.src = avatarUrl;
 
-      // Attach pointer listeners to the container for cursor interaction
-      if (hasFinePointer && !prefersReduced) {
-        container.addEventListener("pointermove", handlePointerMove);
+      // Attach pointer and touch listeners to the container for desktop & mobile interaction
+      if (!prefersReduced) {
+        container.addEventListener("pointermove", handlePointerMove as EventListener);
         container.addEventListener("pointerleave", handlePointerLeave);
+        container.addEventListener("touchstart", handlePointerMove as EventListener, { passive: true });
+        container.addEventListener("touchmove", handlePointerMove as EventListener, { passive: true });
+        container.addEventListener("touchend", handlePointerLeave);
+        container.addEventListener("touchcancel", handlePointerLeave);
       }
 
       return () => {
         timersRef.current.forEach((id) => window.clearTimeout(id));
         timersRef.current = [];
-        if (hasFinePointer) {
-          container.removeEventListener("pointermove", handlePointerMove);
-          container.removeEventListener("pointerleave", handlePointerLeave);
-        }
+        container.removeEventListener("pointermove", handlePointerMove as EventListener);
+        container.removeEventListener("pointerleave", handlePointerLeave);
+        container.removeEventListener("touchstart", handlePointerMove as EventListener);
+        container.removeEventListener("touchmove", handlePointerMove as EventListener);
+        container.removeEventListener("touchend", handlePointerLeave);
+        container.removeEventListener("touchcancel", handlePointerLeave);
         engine?.dispose();
         engineRef.current = null;
         faceImageRef.current = null;

@@ -70,10 +70,19 @@ export default function IntroPlaceholder({ heroReady, onReset }: IntroPlaceholde
   };
 
 
+  const copyTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
+  }, []);
+
   const handleCopyEmail = () => {
     navigator.clipboard.writeText('jdnk007@gmail.com');
     setCopiedEmail(true);
-    setTimeout(() => setCopiedEmail(false), 2200);
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => setCopiedEmail(false), 2200);
   };
 
   return (

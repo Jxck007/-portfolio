@@ -426,7 +426,7 @@ export default function ContributionGraph({
                   return (
                     <td
                       key={weekIdx}
-                      className="p-[1.5px]"
+                      className="p-px sm:p-[1.5px]"
                       title={title}
                       onMouseEnter={(e) => {
                         const rect = e.currentTarget.getBoundingClientRect();
@@ -439,7 +439,7 @@ export default function ContributionGraph({
                       onMouseLeave={() => setHoveredDay(null)}
                     >
                       <div
-                        className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-[3px] border transition-all duration-150 cursor-pointer ${getColorClass(
+                        className={`w-2 h-2 sm:w-3 sm:h-3 rounded-[3px] border transition-all duration-150 cursor-pointer ${getColorClass(
                           day.level
                         )}`}
                       />

@@ -45,8 +45,8 @@ export default function AboutSection({ sectionRef }: AboutSectionProps) {
 
             <pre className="text-zinc-200 overflow-x-auto leading-relaxed text-[11px] sm:text-xs" style={{ WebkitOverflowScrolling: 'touch' }}>
               <code>
-                <span className="text-zinc-500">class</span> <span className="text-white font-bold">JackNandakumar</span>:
-                {'\n'}    <span className="text-zinc-500">def</span> <span className="text-white">__init__</span>(self):
+                <span className="text-zinc-400 font-semibold">class</span> <span className="text-white font-bold">JackNandakumar</span>:
+                {'\n'}    <span className="text-zinc-400 font-semibold">def</span> <span className="text-white">__init__</span>(self):
                 {'\n'}        self.name = <span className="text-zinc-300">"Jegadeesh Nandakumar (Jack)"</span>
                 {'\n'}        self.education = <span className="text-zinc-300">"B.E. CSE (3rd Year) @ RIT Chennai"</span>
                 {'\n'}        self.primary_focus = [

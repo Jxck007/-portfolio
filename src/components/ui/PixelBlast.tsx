@@ -691,6 +691,7 @@ export const PixelBlast: React.FC<PixelBlastProps> = ({
         cancelAnimationFrame(t.raf);
         t.quad?.geometry.dispose();
         t.material.dispose();
+        t.touch?.texture?.dispose();
         t.composer?.dispose();
         t.renderer.dispose();
         t.renderer.forceContextLoss();

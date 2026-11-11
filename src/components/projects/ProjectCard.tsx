@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Project } from '../../data/projects';
-import PixelCard from './PixelCard';
+import PixelCard from '../ui/PixelCard';
 
 interface ProjectCardProps {
   project: Project;
@@ -36,7 +36,7 @@ export default function ProjectCard({
       className="project-pixel-card select-none group/card"
     >
       <article
-        className="project-card-wrapper flex flex-col md:flex-row h-full w-full bg-neutral-950/80 border border-neutral-800/80 rounded-2xl overflow-hidden"
+        className="project-card-wrapper flex flex-col md:flex-row h-full w-full bg-neutral-950/80 border border-neutral-800/80 rounded-2xl overflow-hidden cursor-target"
         aria-label={`Project ${project.number} of 5: ${project.title}`}
       >
         {/* Project Image Section (58-64% width on desktop) */}
@@ -45,6 +45,7 @@ export default function ProjectCard({
             <img
               src={project.image}
               alt={`${project.title} project screenshot`}
+              loading={isActive ? 'eager' : 'lazy'}
               onError={() => setImageFailed(true)}
               className="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/card:scale-[1.025]"
               referrerPolicy="no-referrer"
@@ -67,10 +68,10 @@ export default function ProjectCard({
         </div>
 
         {/* Project Information Details Section */}
-        <div className="flex-grow p-6 md:p-8 flex flex-col justify-between h-auto md:h-full bg-neutral-950/50 relative">
+        <div className="flex-grow p-5 md:p-6 flex flex-col justify-between h-auto md:h-full bg-neutral-950/50 relative">
           <div className="space-y-4">
             {/* Metadata Row */}
-            <div className="flex items-center gap-2 text-[10px] font-mono text-neutral-400 tracking-wider uppercase">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-mono text-neutral-400 tracking-wider uppercase">
               <span className="text-white font-semibold font-mono bg-neutral-900 px-1.5 py-0.5 rounded">{project.number}</span>
               <span className="text-neutral-700">/</span>
               <span>{project.category}</span>
@@ -113,7 +114,7 @@ export default function ProjectCard({
             <div className="flex flex-wrap items-center gap-4 pt-1">
               <button
                 onClick={() => onViewCaseStudy(project)}
-                className="px-4 py-2 bg-white text-black font-mono text-[11px] tracking-wider uppercase hover:bg-neutral-200 transition-colors flex items-center gap-1.5 cursor-pointer rounded-sm group/btn font-semibold"
+                className="cursor-target px-4 py-2 bg-white text-black font-mono text-[11px] tracking-wider uppercase hover:bg-neutral-200 transition-colors flex items-center gap-1.5 cursor-pointer rounded-sm group/btn font-semibold"
                 aria-label={`View detailed case study of ${project.title}`}
               >
                 <span>View Case Study</span>
@@ -133,7 +134,7 @@ export default function ProjectCard({
                   href={project.liveUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[11px] font-mono tracking-wider text-neutral-400 hover:text-white transition-colors uppercase border-b border-transparent hover:border-white pb-0.5"
+                  className="cursor-target text-[11px] font-mono tracking-wider text-neutral-400 hover:text-white transition-colors uppercase border-b border-transparent hover:border-white pb-0.5"
                 >
                   Live Site
                 </a>
@@ -144,7 +145,7 @@ export default function ProjectCard({
                   href={project.githubUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[11px] font-mono tracking-wider text-neutral-400 hover:text-white transition-colors uppercase border-b border-transparent hover:border-white pb-0.5"
+                  className="cursor-target text-[11px] font-mono tracking-wider text-neutral-400 hover:text-white transition-colors uppercase border-b border-transparent hover:border-white pb-0.5"
                 >
                   Source
                 </a>

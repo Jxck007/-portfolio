@@ -8,7 +8,7 @@
 @media (min-width: 768px) {
   :root {
     --card-width: 82vw;
-    --card-height: 520px;
+    --card-height: 500px;
     --card-gap: 32px;
   }
 }
@@ -16,7 +16,7 @@
 @media (min-width: 1024px) {
   :root {
     --card-width: clamp(620px, 68vw, 980px);
-    --card-height: clamp(420px, 62vh, 650px);
+    --card-height: clamp(380px, 54vh, 600px);
     --card-gap: 48px;
   }
 }
@@ -32,7 +32,7 @@
 @media (max-width: 767px) {
   .carousel-card-container {
     height: auto;
-    min-height: 560px;
+    min-height: 500px;
   }
   
   .project-card-wrapper {

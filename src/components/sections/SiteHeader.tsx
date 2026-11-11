@@ -53,7 +53,7 @@ export default function SiteHeader({
     }
   }, [mobileMenuOpen, handleKeyDown]);
 
-  // Close mobile menu on click outside
+  // Close mobile menu on click outside + body scroll lock
   useEffect(() => {
     if (!mobileMenuOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
@@ -64,7 +64,13 @@ export default function SiteHeader({
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    // Lock body scroll while menu is open
+    const original = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.body.style.overflow = original;
+    };
   }, [mobileMenuOpen, onToggleMenu]);
 
   return (
@@ -138,7 +144,7 @@ export default function SiteHeader({
           <button
             ref={toggleRef}
             onClick={onToggleMenu}
-            className="cursor-target p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-white focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:outline-none"
+            className="cursor-target flex items-center justify-center h-11 w-11 rounded-lg bg-zinc-900 border border-zinc-800 text-white focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:outline-none"
             aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-nav-panel"
@@ -173,9 +179,12 @@ export default function SiteHeader({
                     onClick={(e) => {
                       e.preventDefault();
                       onNavigate(item.id);
+                      // Return focus to the menu toggle after navigation so
+                      // keyboard users always have a stable focus anchor.
+                      toggleRef.current?.focus();
                     }}
                     aria-current={isActive ? "true" : undefined}
-                    className={`flex items-center gap-2 w-full text-left px-3 py-2.5 rounded-lg font-mono text-xs uppercase tracking-wider transition-colors focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:outline-none ${
+                    className={`cursor-target flex items-center gap-2 w-full text-left px-3 py-2.5 rounded-lg font-mono text-xs uppercase tracking-wider transition-colors focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:outline-none ${
                       isActive
                         ? "bg-white text-black font-bold"
                         : "text-zinc-300 hover:bg-zinc-900"
@@ -201,7 +210,7 @@ export default function SiteHeader({
                 {onReset && (
                   <button
                     onClick={onReset}
-                    className="text-[10px] font-mono text-zinc-400 hover:text-white uppercase focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:outline-none"
+                    className="cursor-target text-[10px] font-mono text-zinc-400 hover:text-white uppercase focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:outline-none"
                   >
                     Reset Intro
                   </button>

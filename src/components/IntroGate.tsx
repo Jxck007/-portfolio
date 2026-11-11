@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import ParticleIntro, { type ParticleIntroHandle } from "./particles/ParticleIntro";
 import IntroPlaceholder from "./IntroPlaceholder";
 import { startAmbientPad, playWarpWhoosh } from "../utils/audio";
+import { useReducedMotion } from "../utils/useReducedMotion";
 
 interface IntroGateProps {
   isEntered?: boolean;
@@ -12,20 +13,19 @@ interface IntroGateProps {
 export default function IntroGate({ isEntered: propIsEntered, onEnterStateChange }: IntroGateProps) {
   const [internalEntered, setInternalEntered] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
+  const reducedMotion = useReducedMotion();
   const [heroReady, setHeroReady] = useState(false);
   const introRef = useRef<ParticleIntroHandle>(null);
+  const enterTimer1Ref = useRef<NodeJS.Timeout | null>(null);
+  const enterTimer2Ref = useRef<NodeJS.Timeout | null>(null);
 
   const isEntered = propIsEntered !== undefined ? propIsEntered : internalEntered;
 
-  // Monitor user systems for reduced motion preferences
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReducedMotion(mediaQuery.matches);
-
-    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
-    mediaQuery.addEventListener("change", handler);
-    return () => mediaQuery.removeEventListener("change", handler);
+    return () => {
+      if (enterTimer1Ref.current) clearTimeout(enterTimer1Ref.current);
+      if (enterTimer2Ref.current) clearTimeout(enterTimer2Ref.current);
+    };
   }, []);
 
   // One-time interaction hook to safely initiate ambient pad due to browser autoplay policies
@@ -43,36 +43,32 @@ export default function IntroGate({ isEntered: propIsEntered, onEnterStateChange
     };
   }, []);
 
-  // Finish the intro: warp whoosh + portal swap (called once by the choreography)
+  // Finish the intro: warp whoosh + portal swap immediately on click/tap
   const performEnter = () => {
     if (isEntered) return;
     setIsTransitioning(true);
     playWarpWhoosh();
-    setTimeout(() => {
+    enterTimer1Ref.current = setTimeout(() => {
       setInternalEntered(true);
       if (onEnterStateChange) {
         onEnterStateChange(true);
       }
-      // Trigger the staggered hero reveal after the portal swap completes.
-      // A short delay lets the hero mount and stabilise before content fades in.
-      setTimeout(() => setHeroReady(true), 100);
-    }, 600);
+      enterTimer2Ref.current = setTimeout(() => setHeroReady(true), 50);
+    }, 300);
   };
 
-  // Kick off the particle choreography (or skip straight to enter for reduced motion)
+  // Skip multi-stage particle morph choreography and enter immediately on click
   const handleStart = () => {
     if (isEntered || isTransitioning) return;
-    if (reducedMotion) {
-      performEnter();
-      return;
-    }
-    setIsTransitioning(true);
-    introRef.current?.start();
+    performEnter();
   };
 
-  // Keyboard accessibility: Enter or Space anywhere starts the intro
+  // Keyboard accessibility: Enter or Space starts the intro — but ONLY while
+  // the intro is actually showing. Once entered, the listener goes inert so it
+  // never hijacks space-to-scroll, form input, or button activation.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (isEntered || isTransitioning) return;
       if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
         e.preventDefault();
         handleStart();
@@ -81,6 +77,13 @@ export default function IntroGate({ isEntered: propIsEntered, onEnterStateChange
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isTransitioning, isEntered, reducedMotion]);
+
+  // Deep-link / refresh on a route: reveal the hero content
+  useEffect(() => {
+    if (!isEntered || heroReady) return;
+    const t = window.setTimeout(() => setHeroReady(true), 120);
+    return () => window.clearTimeout(t);
+  }, [isEntered, heroReady]);
 
   if (isEntered) {
     return (
@@ -112,8 +115,8 @@ export default function IntroGate({ isEntered: propIsEntered, onEnterStateChange
       }}
       tabIndex={0}
       role="button"
-      aria-label="Intro animation, click or tap anywhere to enter portfolio"
-      className="relative w-full min-h-[100dvh] bg-transparent text-white overflow-hidden flex flex-col items-center justify-center select-none cursor-pointer outline-none"
+      aria-label="Intro screen, click or tap anywhere to enter portfolio"
+      className="relative w-full h-[100dvh] bg-transparent text-white overflow-hidden flex flex-col items-center justify-center select-none cursor-pointer outline-none"
       id="intro-gate-container"
     >
       <AnimatePresence mode="wait">
@@ -125,19 +128,11 @@ export default function IntroGate({ isEntered: propIsEntered, onEnterStateChange
               ? { opacity: 0 }
               : { opacity: 0, scale: 1.02, filter: "blur(8px)" }
           }
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           className="w-full h-full flex flex-col items-center justify-center p-6 z-10 relative"
         >
-          {/* Interaction instructions at the bottom */}
-          <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-20 pointer-events-none select-none text-center">
-            <span className="text-[9px] sm:text-[10px] font-mono tracking-[0.35em] text-white/30 uppercase animate-[pulse_3s_infinite] transition-colors duration-500">
-              <span className="hidden md:inline">CLICK ANYWHERE TO ENTER</span>
-              <span className="inline md:hidden">TAP ANYWHERE TO ENTER</span>
-            </span>
-          </div>
-
-          {/* Immersive Central Interactive Canvas Area */}
-          <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center">
+          {/* Centered composition: particles + instruction */}
+          <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-end pb-10 sm:pb-12">
             <motion.div
               className="absolute inset-0 w-full h-full flex items-center justify-center"
               initial={{ opacity: 0 }}
@@ -151,6 +146,16 @@ export default function IntroGate({ isEntered: propIsEntered, onEnterStateChange
                 onReveal={performEnter}
               />
             </motion.div>
+
+            {/* Interaction instruction — immediately disappears once transition begins */}
+            {!isTransitioning && (
+              <div className="relative z-20 pointer-events-none select-none text-center">
+                <span className="text-[10px] sm:text-xs font-mono tracking-[0.35em] text-white/40 uppercase animate-[pulse_3s_infinite]">
+                  <span className="hidden md:inline">CLICK ANYWHERE TO ENTER</span>
+                  <span className="inline md:hidden">TAP TO ENTER</span>
+                </span>
+              </div>
+            )}
           </div>
         </motion.div>
       </AnimatePresence>

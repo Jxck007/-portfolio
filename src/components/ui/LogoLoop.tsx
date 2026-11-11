@@ -113,6 +113,17 @@ const useAnimationLoop = (
     const track = trackRef.current;
     if (!track) return;
 
+    // Respect prefers-reduced-motion: render one static frame and skip the
+    // rAF loop entirely (the CSS media query also freezes transforms, so the
+    // loop would otherwise burn frames writing overridden values).
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      offsetRef.current = 0;
+      track.style.transform = isVertical
+        ? 'translate3d(0, 0, 0)'
+        : 'translate3d(0, 0, 0)';
+      return;
+    }
+
     const seqSize = isVertical ? seqHeight : seqWidth;
 
     if (seqSize > 0) {

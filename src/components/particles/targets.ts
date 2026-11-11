@@ -26,8 +26,8 @@ export interface ParticleTargets {
   alphas: Float32Array;
 }
 
-const SCAN_W = 768;
-const SCAN_H = 256;
+const SCAN_W = 1536;
+const SCAN_H = 512;
 
 /**
  * JXCK letterforms sampled from an offscreen canvas (same typography as the
@@ -49,11 +49,11 @@ export function generateTextTargets(
   octx.fillStyle = "#ffffff";
   octx.textAlign = "center";
   octx.textBaseline = "middle";
-  octx.font = "900 160px system-ui, -apple-system, sans-serif";
+  octx.font = "900 320px system-ui, -apple-system, sans-serif";
   octx.fillText(text, SCAN_W / 2, SCAN_H / 2);
 
   const data = octx.getImageData(0, 0, SCAN_W, SCAN_H).data;
-  const step = mobile ? 4 : 3;
+  const step = mobile ? 5 : 3;
   const px: number[] = [];
   for (let y = 0; y < SCAN_H; y += step) {
     for (let x = 0; x < SCAN_W; x += step) {
@@ -63,14 +63,40 @@ export function generateTextTargets(
     }
   }
 
+  if (px.length < 4) return generateScatterTargets(count, 2, 3, 0.9);
+
+  // Fit the GLYPH bounding box to a restrained, elegant screen portion:
+  // JXCK spans roughly 55-60% of viewport width on desktop (65% on mobile),
+  // keeping ample breathing room around the centered particle title.
+  let minX = SCAN_W;
+  let maxX = 0;
+  let minY = SCAN_H;
+  let maxY = 0;
+  for (let i = 0; i < px.length; i += 2) {
+    const x = px[i];
+    const y = px[i + 1];
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+  }
+  const bboxW = Math.max(1, maxX - minX);
+  const bboxH = Math.max(1, maxY - minY);
+  const glyphAspect = bboxW / bboxH;
+  const worldH = Math.min(
+    viewport.height * 0.38,
+    (viewport.width * (mobile ? 0.68 : 0.55)) / glyphAspect,
+    viewport.height * 0.55
+  );
+  const worldW = worldH * glyphAspect;
+
+  // Scale particle size with the glyph's growth so density reads consistently
+  const prevH = Math.min(viewport.height * 0.5, viewport.width / (SCAN_W / SCAN_H));
+  const prevGlyphH = prevH * (320 / SCAN_H);
+
   const positions = new Float32Array(count * 3);
   const sizes = new Float32Array(count);
   const alphas = new Float32Array(count);
-
-  // Fit the 3:1 letterforms inside the viewport — big, centred, primary.
-  const textAspect = SCAN_W / SCAN_H;
-  const worldH = Math.min(viewport.height * 0.34, viewport.width / textAspect);
-  const worldW = worldH * textAspect;
 
   const glyphPoints = px.length / 2;
   const stride = Math.max(1, Math.ceil(glyphPoints / count));
@@ -78,10 +104,10 @@ export function generateTextTargets(
   for (let i = 0; i < glyphPoints && gi < count; i += stride) {
     const sx = px[i * 2];
     const sy = px[i * 2 + 1];
-    positions[gi * 3] = (sx / SCAN_W - 0.5) * worldW;
-    positions[gi * 3 + 1] = (0.5 - sy / SCAN_H) * worldH;
+    positions[gi * 3] = ((sx - minX) / bboxW - 0.5) * worldW;
+    positions[gi * 3 + 1] = (0.5 - (sy - minY) / bboxH) * worldH;
     positions[gi * 3 + 2] = 0;
-    sizes[gi] = 0.013 + Math.random() * 0.005;
+    sizes[gi] = 0.022 + Math.random() * 0.008;
     alphas[gi] = 1;
     gi++;
   }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import PixelCard from '../ui/PixelCard';
 import { SiGithub } from 'react-icons/si';
 import { Mail, Linkedin, ArrowRight, Copy, Check, Send, CheckCircle2 } from 'lucide-react';
@@ -16,6 +16,13 @@ export default function ContactSection({ sectionRef, copiedEmail, onCopyEmail }:
   const [mailSubject, setMailSubject] = useState('');
   const [mailMessage, setMailMessage] = useState('');
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const resetTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+    };
+  }, []);
 
   const handleSendMail = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +35,8 @@ export default function ContactSection({ sectionRef, copiedEmail, onCopyEmail }:
 
     window.location.href = `mailto:jdnk007@gmail.com?subject=${subjectText}&body=${bodyText}`;
     setFormSubmitted(true);
-    setTimeout(() => {
+    if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+    resetTimerRef.current = setTimeout(() => {
       setFormSubmitted(false);
       setSenderEmail('');
       setMailSubject('');

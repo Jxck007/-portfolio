@@ -10,6 +10,23 @@
   transform: translate(-50%, -50%);
 }
 
+/* Subtle CRT micro-flicker — extremely restrained opacity modulation */
+@keyframes crt-flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.92; }
+}
+
+.target-cursor-wrapper {
+  animation: crt-flicker 4s ease-in-out infinite;
+}
+
+/* Disable flicker on reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .target-cursor-wrapper {
+    animation: none;
+  }
+}
+
 .target-cursor-dot {
   position: absolute;
   left: 50%;
@@ -28,8 +45,21 @@
   top: 50%;
   width: 12px;
   height: 12px;
-  border: 3px solid #fff;
+  border: 2px solid #fff;
   will-change: transform;
+  transition: border-width 0.15s ease-out;
+}
+
+/* Slightly thicker brackets on interactive targets */
+.target-cursor-wrapper.target-active .target-cursor-corner {
+  border-width: 3px;
+  transition: border-width 0.12s ease-out;
+}
+
+/* Dot gains a subtle glow on target lock */
+.target-cursor-wrapper.target-active .target-cursor-dot {
+  box-shadow: 0 0 6px 1px rgba(255,255,255,0.35);
+  transition: box-shadow 0.15s ease-out;
 }
 
 .corner-tl {
@@ -56,17 +86,14 @@
   border-top: none;
 }
 
-/* ─── Touch-device active feedback ─── */
+/* ─── Touch-device active feedback ───
+   (No forced 44px min-size here: it distorted intentionally-thin controls
+   like the carousel indicator tabs on touch devices. Interactive elements
+   already carry adequate padding/tap area.) */
 @media (pointer: coarse) {
   .cursor-target:active {
     transform: scale(0.97);
     opacity: 0.85;
     transition: transform 0.1s ease-out, opacity 0.1s ease-out;
-  }
-
-  /* Ensure touch targets are large enough (min 44x44 per WCAG) */
-  .cursor-target {
-    min-height: 44px;
-    min-width: 44px;
   }
 }

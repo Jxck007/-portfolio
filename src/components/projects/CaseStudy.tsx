@@ -3,35 +3,31 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { projects, Project } from '../../data/projects';
 import { motion } from 'motion/react';
 
+import { useReducedMotion } from '../../utils/useReducedMotion';
+
 export default function CaseStudy() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [project, setProject] = useState<Project | null>(null);
-  const [reducedMotion, setReducedMotion] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReducedMotion(mediaQuery.matches);
-  }, []);
+  const reducedMotion = useReducedMotion();
+  const [project, setProject] = useState<Project | null>(() => {
+    return projects.find((p) => p.id === id) || null;
+  });
 
   useEffect(() => {
     const found = projects.find((p) => p.id === id);
-    if (found) {
-      setProject(found);
-    }
+    setProject(found || null);
   }, [id]);
 
   if (!project) {
     return (
       <div className="min-h-screen bg-neutral-950 text-white flex flex-col items-center justify-center font-mono">
         <span className="text-xs text-neutral-500 uppercase tracking-[0.2em] mb-4">SEARCHING SYSTEM DATA...</span>
-        <h2 className="text-xl border border-neutral-800 px-4 py-2 rounded">PROJECT RECORD NOT FOUND</h2>
-        <button
-          onClick={() => navigate('/projects')}
-          className="mt-6 text-xs uppercase tracking-widest text-neutral-400 hover:text-white border-b border-neutral-800 pb-0.5 transition-colors cursor-pointer"
-        >
-          Return to Launchpad
-        </button>
+        <h2 className="text-xl border border-neutral-800 px-4 py-2 rounded">PROJECT RECORD NOT FOUND</h2>          <button
+            onClick={() => navigate('/projects')}
+            className="cursor-target mt-6 text-xs uppercase tracking-widest text-neutral-400 hover:text-white border-b border-neutral-800 pb-0.5 transition-colors cursor-pointer"
+          >
+            ← BACK TO WORK
+          </button>
       </div>
     );
   }
@@ -44,45 +40,38 @@ export default function CaseStudy() {
   // Structured case study details mapped directly from Jack's actual project records
   const getCaseStudyDetails = (pId: string) => {
     switch (pId) {
-      case 'uniqscan':
+      case 'zyphoria':
         return {
-          challenge: 'Traditional on-duty (OD) and campus permission management relied on manual paper forms, physical signatures, and cumbersome checkpoint verification for student movements.',
-          solution: 'Engineered a full-stack paperless permission system with React Native mobile client, robust Python Flask REST API backend, and relational PostgreSQL data store. Student requests are approved digitally and authenticated in real-time via dynamic QR code scanning on student ID cards. BE Capstone Project.',
-          impact: 'Eliminated manual paper friction entirely, cutting permission turnaround time by 90% and enabling sub-second identity verification at security checkpoints.',
-          metrics: ['90% faster processing', '100% paperless approvals', 'Instant QR validation', 'BE Capstone']
+          challenge: 'College symposiums need a centralized platform for event information, registration, and live coordination across multiple academic departments.',
+          solution: 'Built the official symposium platform with TypeScript, Supabase, and React deployed on Vercel. Features include participant registration, schedule management, event updates, and real-time live coordination across departments.',
+          impact: 'Successfully served as the official symposium platform, supporting registrations and event operations in a collaborative high-availability development environment.',
+          metrics: ['Real-time event coordination', 'Multi-department support', 'Supabase backend', 'Live in production']
         };
-      case 'rit-grubpoint':
+      case 'billease':
         return {
-          challenge: 'Campus dining halls experienced long wait times, congested payment queues, and unpredictable food availability during peak lunch breaks.',
-          solution: 'Built a cross-platform mobile ordering application using Flutter and Dart, backed by Firebase Authentication, Firestore, and Realtime Database. Integrated a campus student digital wallet system, advance table reservations, and live order tracking from kitchen to pickup.',
-          impact: 'Streamlined meal orders for hundreds of students, drastically reducing wait times and digitizing cashless transactions across campus cafeterias.',
-          metrics: ['Live order status', 'Built-in student wallet', 'Table reservation system', 'Zero cash friction']
+          challenge: 'Small businesses need an intuitive billing, quotation, and invoice generation platform that supports bilingual workflows and real-time synchronization.',
+          solution: 'Architected a billing platform with React, TypeScript, Firebase, and Tailwind CSS. Features bilingual Tamil and English localization, instant PDF generation, and cloud-backed real-time synchronization via Firebase.',
+          impact: 'Tailored for seamless usability by non-technical business operators with real-time cloud sync and instant PDF output.',
+          metrics: ['Bilingual Tamil/English', 'Instant PDF generation', 'Firebase real-time sync', 'Active in production']
         };
-      case 'edumate':
+      case 'mystery-box':
         return {
-          challenge: 'College students struggled to find instant, accurate academic information, syllabus notes, and campus updates scattered across disparate portals and bulletin boards.',
-          solution: 'Developed a multilingual Flutter-based educational assistant powered by Python NLP pipelines and intelligent query classifiers to provide instant, context-aware answers to student queries.',
-          impact: 'Empowered students with 24/7 academic assistance in multiple regional languages with high natural language comprehension and instant query turnaround.',
-          metrics: ['Multilingual support', 'Instant NLP answering', 'Cross-platform Flutter', '24/7 Academic bot']
+          challenge: 'College events need real-time game and event management with live team coordination, dynamic scoring algorithms, and real-time leaderboard broadcast.',
+          solution: 'Built a real-time event platform with TypeScript, Supabase, React, and Supabase Realtime API. Features live team coordination for ~65 teams, dynamic scoring, leaderboard broadcast, and organizer administration.',
+          impact: 'Deployed during a major college event serving ~65 participating teams with low-latency Supabase websocket data handling.',
+          metrics: ['65+ teams served live', 'Real-time leaderboards', 'Supabase websockets', 'Deployed live']
         };
-      case 'flask-resume-builder':
+      case 'forge-resume':
         return {
-          challenge: 'Job seekers often struggle with cluttered resume formats and complex design tools that fail ATS parsers or break layout exports.',
-          solution: 'Constructed an intuitive, lightweight Python Flask web application featuring real-time structured preview, modular section reordering, Jinja2 dynamic templating, and clean PDF compilation.',
-          impact: 'Delivered a fast, zero-bloat resume generator that produces clean, ATS-friendly professional resumes in seconds without requiring heavy third-party software.',
-          metrics: ['ATS-compliant output', 'Real-time live preview', 'Instant PDF export', 'Modular Flask backend']
-        };
-      case 'flask-notes-app':
-        return {
-          challenge: 'Demonstrating clean, minimal full-stack architectural fundamentals without bloated frontend bundles or excessive third-party dependencies.',
-          solution: 'Engineered an elegant Flask web application utilizing relational SQLite persistence, parameterized queries, Jinja2 server-side rendering, and strict CRUD state handling.',
-          impact: 'Serves as a prime reference for minimal, secure full-stack Python development with zero build step overhead and instant response times.',
-          metrics: ['Lightweight architecture', 'SQLite persistence', 'Clean RESTful CRUD', 'Zero frontend bloat']
+          challenge: 'Job seekers struggle with cluttered resume formats and complex design tools that fail ATS parsers or break layout exports.',
+          solution: 'Built a modern resume builder with React, TypeScript, Firebase, and Tailwind CSS. Features document import, modular section editing, optional AI-assisted writing polish, and instant live PDF compilation.',
+          impact: 'Delivered a fast, zero-bloat resume generator that produces clean, ATS-friendly professional resumes with transparent, student-friendly output.',
+          metrics: ['AI-assisted writing tools', 'ATS-optimized output', 'Instant PDF export', 'Live in production']
         };
       default:
         return {
           challenge: 'Developing high-performance, maintainable systems tailored for campus workflows and modern developer productivity.',
-          solution: 'Engineered clean Python backend microservices paired with cross-platform Dart/Flutter interfaces and relational database schemas.',
+          solution: 'Engineered clean backend services paired with cross-platform interfaces and relational database schemas.',
           impact: 'Delivered reliable systems with high developer experience and robust operational benchmarks.',
           metrics: ['Robust optimization', 'Modular architecture', 'High-performance layout']
         };
@@ -92,7 +81,7 @@ export default function CaseStudy() {
   const details = getCaseStudyDetails(project.id);
 
   return (
-    <div className="relative min-h-screen bg-neutral-950 text-white selection:bg-white/20 select-text overflow-y-auto">
+    <div className="relative min-h-screen bg-neutral-950 text-white selection:bg-white/20 select-text">
       {/* Background Graphic Grid */}
       <div className="fixed inset-0 pointer-events-none select-none z-0" aria-hidden="true">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-neutral-900/40 via-neutral-950 to-neutral-950" />
@@ -110,12 +99,12 @@ export default function CaseStudy() {
         >
           <button
             onClick={handleBack}
-            className="group flex items-center gap-2 text-xs font-mono tracking-widest text-neutral-400 hover:text-white transition-colors uppercase cursor-pointer"
+            className="cursor-target group flex items-center gap-2 text-xs font-mono tracking-widest text-neutral-400 hover:text-white transition-colors uppercase cursor-pointer"
           >
             <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
-            <span>Return to Projects</span>
+            <span>BACK TO WORK</span>
           </button>
           
           <span className="text-[10px] font-mono tracking-[0.3em] text-neutral-500 uppercase hidden sm:inline">
@@ -131,7 +120,7 @@ export default function CaseStudy() {
             transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
             className="lg:col-span-7 space-y-4"
           >
-            <div className="flex items-center gap-3 text-xs font-mono text-neutral-400 uppercase tracking-wider">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs font-mono text-neutral-400 uppercase tracking-wider">
               <span className="text-white font-mono bg-neutral-900 px-2 py-0.5 rounded">{project.number}</span>
               <span>•</span>
               <span>{project.category}</span>
@@ -139,7 +128,7 @@ export default function CaseStudy() {
               <span>{project.year}</span>
             </div>
             
-            <h1 className="text-4xl md:text-6xl font-medium tracking-tighter text-white leading-none">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-medium tracking-tighter text-white leading-none">
               {project.title}
             </h1>
             
@@ -252,7 +241,7 @@ export default function CaseStudy() {
                     href={project.liveUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-neutral-400 hover:text-white transition-colors flex items-center justify-between"
+                    className="cursor-target text-neutral-400 hover:text-white transition-colors flex items-center justify-between"
                   >
                     <span>LIVE INTERACTIVE INSTANCE</span>
                     <span>→</span>
@@ -263,7 +252,7 @@ export default function CaseStudy() {
                     href={project.githubUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-neutral-400 hover:text-white transition-colors flex items-center justify-between"
+                    className="cursor-target text-neutral-400 hover:text-white transition-colors flex items-center justify-between"
                   >
                     <span>SOURCE ARCHIVE</span>
                     <span>→</span>
@@ -280,9 +269,9 @@ export default function CaseStudy() {
           <span>PORTFOLIO LAUNCHPAD OS</span>
           <button
             onClick={handleBack}
-            className="text-neutral-400 hover:text-white uppercase transition-colors cursor-pointer"
+            className="cursor-target text-neutral-400 hover:text-white uppercase transition-colors"
           >
-            CLOSE CASE STUDY [ESC]
+            ← BACK TO WORK
           </button>
         </div>
       </div>

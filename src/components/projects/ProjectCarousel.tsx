@@ -24,6 +24,7 @@ export default function ProjectCarousel() {
   const [reducedMotion, setReducedMotion] = useState(false);
 
   const startXRef = useRef(0);
+  const dragOffsetRef = useRef(0);
   const isPointerDownRef = useRef(false);
   const timerRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -77,8 +78,9 @@ export default function ProjectCarousel() {
   // Drag Gesture Handlers
   const handlePointerDown = (e: React.PointerEvent) => {
     if (transitionState !== 'idle') return;
-    
-    // Only drag with primary mouse button / touch
+    // Do not intercept clicks on interactive elements (buttons, links)
+    const tag = (e.target as HTMLElement)?.tagName;
+    if (tag === 'BUTTON' || tag === 'A') return;
     startXRef.current = e.clientX;
     isPointerDownRef.current = true;
     setIsDragging(true);
@@ -88,8 +90,11 @@ export default function ProjectCarousel() {
     if (!isPointerDownRef.current) return;
     const currentX = e.clientX;
     const diff = currentX - startXRef.current;
-    
-    // Smooth responsive dampening of extreme drags
+
+    // Smooth responsive dampening of extreme drags. Mirror into a ref so the
+    // swipe threshold at pointer-up is never stale (fast flicks may skip the
+    // final re-render).
+    dragOffsetRef.current = diff;
     setDragOffset(diff);
   };
 
@@ -99,12 +104,14 @@ export default function ProjectCarousel() {
     setIsDragging(false);
 
     const threshold = 65; // Small responsive drag threshold
-    if (dragOffset < -threshold) {
+    const offset = dragOffsetRef.current;
+    if (offset < -threshold) {
       handleNext();
-    } else if (dragOffset > threshold) {
+    } else if (offset > threshold) {
       handlePrev();
     }
-    
+
+    dragOffsetRef.current = 0;
     setDragOffset(0);
   };
 
@@ -299,7 +306,7 @@ export default function ProjectCarousel() {
         {/* PREVIOUS Button */}
         <button
           onClick={handlePrev}
-          className="group flex items-center gap-2.5 text-[10px] font-mono tracking-[0.25em] text-neutral-400 hover:text-white transition-colors uppercase focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white p-2 rounded-sm cursor-pointer select-none"
+          className="cursor-target group flex items-center gap-2.5 text-[10px] font-mono tracking-[0.25em] text-neutral-400 hover:text-white transition-colors uppercase focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white p-2 rounded-sm cursor-pointer select-none"
           aria-label="Previous project"
         >
           <svg
@@ -325,7 +332,7 @@ export default function ProjectCarousel() {
                 aria-selected={idx === activeIndex}
                 aria-label={`Go to project ${idx + 1}`}
                 onClick={() => handleIndicatorClick(idx)}
-                className={`h-[3px] transition-all duration-300 rounded-full cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white ${
+                className={`cursor-target h-[3px] transition-all duration-300 rounded-full cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white ${
                   idx === activeIndex ? 'w-8 bg-white' : 'w-3.5 bg-neutral-800 hover:bg-neutral-600'
                 }`}
               />
@@ -337,7 +344,7 @@ export default function ProjectCarousel() {
         {/* NEXT Button */}
         <button
           onClick={handleNext}
-          className="group flex items-center gap-2.5 text-[10px] font-mono tracking-[0.25em] text-neutral-400 hover:text-white transition-colors uppercase focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white p-2 rounded-sm cursor-pointer select-none"
+          className="cursor-target group flex items-center gap-2.5 text-[10px] font-mono tracking-[0.25em] text-neutral-400 hover:text-white transition-colors uppercase focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white p-2 rounded-sm cursor-pointer select-none"
           aria-label="Next project"
         >
           <span>NEXT</span>

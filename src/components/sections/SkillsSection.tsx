@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import LogoLoop, { LogoItem } from '../ui/LogoLoop';
 import { SKILLS_DATA, SkillDetail } from '../../data/skills';
 import { SiPython, SiPostgresql, SiSqlite, SiFirebase, SiFlutter, SiFlask, SiReact, SiDart, SiHtml5, SiJavascript, SiDocker, SiGit, SiGithub, SiGithubactions, SiRender, SiVercel, SiDjango, SiJenkins, SiLeetcode, SiSupabase, SiTypescript } from 'react-icons/si';
 import { FaAws } from 'react-icons/fa6';
-import { TbDatabase, TbBrandCss3 } from 'react-icons/tb';
+import { TbDatabase } from 'react-icons/tb';
 import { ExternalLink, X, Code2 } from 'lucide-react';
 import type { RefObject } from 'react';
 
@@ -44,6 +44,16 @@ export default function SkillsSection({ sectionRef }: SkillsSectionProps) {
   const [activeStackTab, setActiveStackTab] = useState<StackCategoryTab>('all');
   const [selectedSkill, setSelectedSkill] = useState<SkillDetail | null>(null);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && selectedSkill) {
+        setSelectedSkill(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedSkill]);
+
   const toggleSkill = (skill: SkillDetail) => {
     setSelectedSkill((prev) => (prev?.id === skill.id ? null : skill));
   };
@@ -74,13 +84,12 @@ export default function SkillsSection({ sectionRef }: SkillsSectionProps) {
       case 'FaAws':
       case 'SiAmazonaws': return <span className={className}><FaAws /></span>;
       case 'TbDatabase': return <span className={className}><TbDatabase /></span>;
-      case 'TbBrandCss3': return <span className={className}><TbBrandCss3 /></span>;
       default: return <Code2 className={className} />;
     }
   };
 
   /* --- Conveyor logo items per category tab --- */
-  const handsOnLogos: LogoItem[] = [
+  const handsOnLogos: LogoItem[] = useMemo(() => [
     { node: (<button onClick={() => toggleSkill(SKILLS_DATA.python)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/60 hover:border-zinc-400 text-zinc-200 font-mono text-xs cursor-target transition-all"><span className="text-sm text-zinc-100 inline-flex"><SiPython /></span> Python</button>), title: 'Python' },
     { node: (<button onClick={() => toggleSkill(SKILLS_DATA.flask)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/60 hover:border-zinc-400 text-zinc-200 font-mono text-xs cursor-target transition-all"><span className="text-sm text-zinc-100 inline-flex"><SiFlask /></span> Flask</button>), title: 'Flask' },
     { node: (<button onClick={() => toggleSkill(SKILLS_DATA.sql)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/60 hover:border-zinc-400 text-zinc-200 font-mono text-xs cursor-target transition-all"><span className="text-sm text-zinc-100 inline-flex"><TbDatabase /></span> SQL</button>), title: 'SQL' },
@@ -88,9 +97,9 @@ export default function SkillsSection({ sectionRef }: SkillsSectionProps) {
     { node: (<button onClick={() => toggleSkill(SKILLS_DATA.sqlite)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/60 hover:border-zinc-400 text-zinc-200 font-mono text-xs cursor-target transition-all"><span className="text-sm text-zinc-100 inline-flex"><SiSqlite /></span> SQLite</button>), title: 'SQLite' },
     { node: (<button onClick={() => toggleSkill(SKILLS_DATA.git)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/60 hover:border-zinc-400 text-zinc-200 font-mono text-xs cursor-target transition-all"><span className="text-sm text-zinc-100 inline-flex"><SiGit /></span> Git</button>), title: 'Git' },
     { node: (<button onClick={() => toggleSkill(SKILLS_DATA.github)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/60 hover:border-zinc-400 text-zinc-200 font-mono text-xs cursor-target transition-all"><span className="text-sm text-zinc-100 inline-flex"><SiGithub /></span> GitHub</button>), title: 'GitHub' },
-  ];
+  ], []);
 
-  const buildLogos: LogoItem[] = [
+  const buildLogos: LogoItem[] = useMemo(() => [
     { node: (<button onClick={() => toggleSkill(SKILLS_DATA.flutter)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/60 hover:border-zinc-400 text-zinc-200 font-mono text-xs cursor-target transition-all"><span className="text-sm text-zinc-100 inline-flex"><SiFlutter /></span> Flutter</button>), title: 'Flutter' },
     { node: (<button onClick={() => toggleSkill(SKILLS_DATA.dart)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/60 hover:border-zinc-400 text-zinc-200 font-mono text-xs cursor-target transition-all"><span className="text-sm text-zinc-100 inline-flex"><SiDart /></span> Dart</button>), title: 'Dart' },
     { node: (<button onClick={() => toggleSkill(SKILLS_DATA.react)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/60 hover:border-zinc-400 text-zinc-200 font-mono text-xs cursor-target transition-all"><span className="text-sm text-zinc-100 inline-flex"><SiReact /></span> React</button>), title: 'React' },
@@ -98,23 +107,28 @@ export default function SkillsSection({ sectionRef }: SkillsSectionProps) {
     { node: (<button onClick={() => toggleSkill(SKILLS_DATA.firebase)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/60 hover:border-zinc-400 text-zinc-200 font-mono text-xs cursor-target transition-all"><span className="text-sm text-zinc-100 inline-flex"><SiFirebase /></span> Firebase</button>), title: 'Firebase' },
     { node: (<button onClick={() => toggleSkill(SKILLS_DATA.supabase)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/60 hover:border-zinc-400 text-zinc-200 font-mono text-xs cursor-target transition-all"><span className="text-sm text-zinc-100 inline-flex"><SiSupabase /></span> Supabase</button>), title: 'Supabase' },
     { node: (<button onClick={() => toggleSkill(SKILLS_DATA.render)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/60 hover:border-zinc-400 text-zinc-200 font-mono text-xs cursor-target transition-all"><span className="text-sm text-zinc-100 inline-flex"><SiRender /></span> Render</button>), title: 'Render' },
-  ];
+  ], []);
 
-  const learningLogos: LogoItem[] = [
+  const learningLogos: LogoItem[] = useMemo(() => [
     { node: (<button onClick={() => toggleSkill(SKILLS_DATA.django)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/60 hover:border-zinc-400 text-zinc-200 font-mono text-xs cursor-target transition-all"><span className="text-sm text-zinc-100 inline-flex"><SiDjango /></span> Django</button>), title: 'Django' },
     { node: (<button onClick={() => toggleSkill(SKILLS_DATA.docker)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/60 hover:border-zinc-400 text-zinc-200 font-mono text-xs cursor-target transition-all"><span className="text-sm text-zinc-100 inline-flex"><SiDocker /></span> Docker</button>), title: 'Docker' },
     { node: (<button onClick={() => toggleSkill(SKILLS_DATA.aws)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/60 hover:border-zinc-400 text-zinc-200 font-mono text-xs cursor-target transition-all"><span className="text-sm text-zinc-100 inline-flex"><FaAws /></span> AWS</button>), title: 'AWS' },
     { node: (<button onClick={() => toggleSkill(SKILLS_DATA.githubactions)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/60 hover:border-zinc-400 text-zinc-200 font-mono text-xs cursor-target transition-all"><span className="text-sm text-zinc-100 inline-flex"><SiGithubactions /></span> CI/CD</button>), title: 'CI/CD' },
     { node: (<button onClick={() => toggleSkill(SKILLS_DATA.jenkins)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/60 hover:border-zinc-400 text-zinc-200 font-mono text-xs cursor-target transition-all"><span className="text-sm text-zinc-100 inline-flex"><SiJenkins /></span> Jenkins</button>), title: 'Jenkins' },
     { node: (<button onClick={() => toggleSkill(SKILLS_DATA.vercel)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/60 hover:border-zinc-400 text-zinc-200 font-mono text-xs cursor-target transition-all"><span className="text-sm text-zinc-100 inline-flex"><SiVercel /></span> Vercel</button>), title: 'Vercel' },
-  ];
+  ], []);
 
-  const allTechLogos: LogoItem[] = [...handsOnLogos, ...buildLogos, ...learningLogos];
+  const allTechLogos: LogoItem[] = useMemo(
+    () => [...handsOnLogos, ...buildLogos, ...learningLogos],
+    [handsOnLogos, buildLogos, learningLogos]
+  );
 
-  const currentLogos =
-    activeStackTab === 'hands-on' ? handsOnLogos :
-    activeStackTab === 'builds' ? buildLogos :
-    activeStackTab === 'learning' ? learningLogos : allTechLogos;
+  const currentLogos = useMemo(() => {
+    if (activeStackTab === 'hands-on') return handsOnLogos;
+    if (activeStackTab === 'builds') return buildLogos;
+    if (activeStackTab === 'learning') return learningLogos;
+    return allTechLogos;
+  }, [activeStackTab, handsOnLogos, buildLogos, learningLogos, allTechLogos]);
 
   return (
     <section

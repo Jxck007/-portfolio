@@ -170,6 +170,9 @@ export interface PixelCardProps {
   speed?: number;
   colors?: string;
   noFocus?: boolean;
+  active?: boolean;
+  isActiveOrNeighbor?: boolean;
+  isDragging?: boolean;
   className?: string;
   style?: React.CSSProperties;
   children?: React.ReactNode;
